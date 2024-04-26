@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
+from tkinter import messagebox
 
 # Создаём базу данных. Работаем сверху, после блока импорта.
 def init_db():
@@ -45,6 +46,21 @@ def view_orders():
         tree.insert("", tk.END, values=row)
     conn.close()
 
+# Добавляем функцию, которая будет закрывать заказ:
+def complete_order():
+    selected_item = tree.selection()
+    if selected_item:
+        order_id = tree.item(selected_item[0])['values'][0]
+        conn = sqlite3.connect('business_orders.db')
+        cur = conn.cursor()
+        cur.execute("UPDATE orders SET status = 'Завершён' WHERE id = ?", (order_id,))
+        conn.commit()
+        conn.close()
+        view_orders()
+
+    else:
+        messagebox.showwarning('Предупреждение', 'Выберите заказ для завершения')
+
 # создаем окно интерфейса
 app = tk.Tk()
 app.title('Система управления заказами')
@@ -54,12 +70,18 @@ tk.Label(app, text = 'Имя клиента').pack()
 customer_name_entry = tk.Entry(app)
 customer_name_entry.pack()
 # создаем поля для деталей заказа
-tk.Label(app, text = 'Детали заказа').pack()
+tk.Label(app, text='Детали заказа').pack()
 order_details_entry = tk.Entry(app)
 order_details_entry.pack()
+
 # создаем кнопку, которая будет добавлять введенные данные в таблицу
-add_button = tk.Button(app, text='Добавить заказ', command = add_order)
+add_button = tk.Button(app, text='Добавить заказ', command=add_order)
 add_button.pack()
+
+# создаем кнопку, которая будет завершать заказы
+complete_button = tk.Button(app, text='Завершить заказ', command=complete_order)
+complete_button.pack()
+
 # используем новую функцию
 columns = ("id", "customer_name", "oder_details", "status")
 tree = ttk.Treeview(app, columns=columns, show="headings")
